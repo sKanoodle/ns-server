@@ -29,7 +29,7 @@ namespace NSServer
         {
             var text = File.ReadAllText(ConfigFile);
             var result = JsonConvert.DeserializeObject<Config>(text);
-            if (result.Password[0] == '{')
+            if (result.Password[0] != '{')
             {
                 result.SetPassword(result.Password);
                 File.WriteAllText(ConfigFile, JsonConvert.SerializeObject(result));
