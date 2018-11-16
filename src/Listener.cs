@@ -21,6 +21,7 @@ namespace NSServer
             while (true)
                 await listener.AcceptTcpClientAsync().ContinueWith(async t =>
                 {
+                    Console.WriteLine("listening for new client");
                     var client = t.Result;
                     var stream = new SslStream(client.GetStream(), false);
 

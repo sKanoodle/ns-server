@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -7,10 +7,10 @@ namespace NSServer
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             Listener listener = new Listener();
-            await listener.Start(HandleMessage);
+            listener.Start(HandleMessage).Wait();
         }
 
         private static string HandleMessage(string message)
