@@ -32,7 +32,7 @@ namespace NSServer
             if (result.Password[0] != '{')
             {
                 result.SetPassword(result.Password);
-                File.WriteAllText(ConfigFile, JsonConvert.SerializeObject(result));
+                File.WriteAllText(ConfigFile, JsonConvert.SerializeObject(result, Formatting.Indented));
             }
             return result;
         }

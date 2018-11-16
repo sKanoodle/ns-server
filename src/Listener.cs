@@ -20,7 +20,7 @@ namespace NSServer
             listener.Start();
             while (true)
             {
-                Console.WriteLine("listening for new client...");
+                Console.WriteLine($"listening for new client on {Config.Instance.ListenIP}:{Config.Instance.ListenPort}...");
                 await listener.AcceptTcpClientAsync().ContinueWith(async t =>
                 {
                     Console.WriteLine("client connected!");
