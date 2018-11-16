@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -40,11 +40,8 @@ namespace NSServer
             string serialRegex = @"(SOA.*\n\W+)(\d+)";
             string recordRegex = "(" + Config.Instance.EntryToChange + @"\W+IN\W+A\W+)(\d{1,3}\.){3}\d{1,3}";
 
-            var match = Regex.Match(zone, serialRegex);
-            int serial = int.Parse(match.Groups[2].Value);
-
-            zone = Regex.Replace(zone, serialRegex, $"$1{serial + 1}");
-            zone = Regex.Replace(zone, recordRegex, $"$1{newIP}");
+            zone = Regex.Replace(zone, serialRegex,m => $"{m.Groups[1].Value}{int.Parse(m.Groups[2].Value) + 1}");
+            zone = Regex.Replace(zone, recordRegex, m => $"{m.Groups[1].Value}{newIP}");
             File.WriteAllText(Config.Instance.ZoneFilePath, zone);
 
             var proc = new Process() { StartInfo = new ProcessStartInfo("/bin/bash", "service bind9 reload") };
