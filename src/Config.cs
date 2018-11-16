@@ -37,11 +37,11 @@ namespace NSServer
             return result;
         }
 
-        public string ListenIP { get; private set; }
-        public string ListenPort { get; private set; }
-        public string ZoneFilePath { get; private set; }
-        public string EntryToChange { get; private set; }
-        public string Password { get; private set; }
+        public string ListenIP { get; set; }
+        public string ListenPort { get; set; }
+        public string ZoneFilePath { get; set; }
+        public string EntryToChange { get; set; }
+        public string Password { get; set; }
         public string ServerCertificatePath { get; set; }
 
         private const int PASSWORD_LENGTH = 20;
