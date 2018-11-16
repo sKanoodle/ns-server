@@ -58,8 +58,8 @@ namespace NSServer
             byte[] salt = new byte[SALT_LENGTH];
             new RNGCryptoServiceProvider().GetBytes(salt);
             var result = new byte[PASSWORD_LENGTH + SALT_LENGTH];
-            Array.Copy(HashString(password, salt), 0, Hash, 0, PASSWORD_LENGTH);
-            Array.Copy(salt, 0, Hash, PASSWORD_LENGTH, SALT_LENGTH);
+            Array.Copy(HashString(password, salt), 0, result, 0, PASSWORD_LENGTH);
+            Array.Copy(salt, 0, result, PASSWORD_LENGTH, SALT_LENGTH);
             Hash = result;
         }
 

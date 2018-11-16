@@ -19,9 +19,11 @@ namespace NSServer
             TcpListener listener = new TcpListener(IPAddress.Parse(Config.Instance.ListenIP), int.Parse(Config.Instance.ListenPort));
             listener.Start();
             while (true)
+            {
+                Console.WriteLine("listening for new client...");
                 await listener.AcceptTcpClientAsync().ContinueWith(async t =>
                 {
-                    Console.WriteLine("listening for new client");
+                    Console.WriteLine("client connected!");
                     var client = t.Result;
                     var stream = new SslStream(client.GetStream(), false);
 
@@ -45,6 +47,7 @@ namespace NSServer
                         client.Close();
                     }
                 });
+            }
         }
 
         private async Task SendMessage(SslStream stream, string message)
