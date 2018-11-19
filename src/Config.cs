@@ -43,6 +43,7 @@ namespace NSServer
         public string EntryToChange { get; set; }
         public string Password { get; set; }
         public string ServerCertificatePath { get; set; }
+        public string ServerPrivateKeyPath { get; set; }
 
         private const int PASSWORD_LENGTH = 20;
         private const int SALT_LENGTH = 16;

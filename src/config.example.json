@@ -4,5 +4,6 @@
     "ZoneFilePath": "/path/to/zone/file",
     "EntryToChange": "mail",
     "Password": "set pw here, will get hashed after program start, must not start with '{'",
-    "ServerCertificatePath": "/path/to/certificate"
+    "ServerCertificatePath": "/path/to/certificate",
+    "ServerPrivateKeyPath": "/path/to/certificate/key"
 }

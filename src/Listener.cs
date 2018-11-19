@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +15,12 @@ namespace NSServer
     class Listener
     {
         private const int BUFFER_SIZE = 256;
+
+        // will not work on widnows. to run on windows either
+        //      - create cert with 'openssl pkcs12 -export -out cert.p12 -in cert.pem -inkey privkey.pem'
+        //      - or wrap certificate a second time like in https://github.com/dotnet/corefx/issues/24454#issuecomment-388231655
+        //      - or hope the bug is already fixed at this time
+        private X509Certificate2 Certificate => new X509Certificate2(Config.Instance.ServerCertificatePath).CopyWithPrivateKey(PemKeyLoader.DecodeRSAPkcs8(Config.Instance.ServerPrivateKeyPath));
 
         public async Task Start(Func<string, string> handleMessage)
         {
@@ -29,7 +37,7 @@ namespace NSServer
 
                     try
                     {
-                        stream.AuthenticateAsServer(X509Certificate.CreateFromCertFile(Config.Instance.ServerCertificatePath), clientCertificateRequired: false, checkCertificateRevocation: true);
+                        stream.AuthenticateAsServer(Certificate, clientCertificateRequired: false, checkCertificateRevocation: true);
 
                         foreach (string message in ReadMessages(stream))
                             await SendMessage(stream, handleMessage(message));
@@ -40,6 +48,11 @@ namespace NSServer
                         if (e.InnerException != null)
                             Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
                         Console.WriteLine("Authentication failed - closing the connection.");
+                    }
+                    // async eats exceptions
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
                     }
                     finally
                     {

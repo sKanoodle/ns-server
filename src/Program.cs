@@ -22,14 +22,14 @@ namespace NSServer
             {
                 case "login":
                     if (Config.Instance.IsPasswordMatch(data))
-                        return "wrong password";
-                    return "ok";
+                        return "wrong password\n\n";
+                    return "ok\n\n";
                 case "change-ip":
                     // TODO: error handling?
                     ChangeConfig(data);
-                    return "ok";
+                    return "ok\n\n";
                 default:
-                    return "invalid message";
+                    return "invalid message\n\n";
             }
         }
 
