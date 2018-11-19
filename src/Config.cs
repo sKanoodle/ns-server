@@ -50,8 +50,8 @@ namespace NSServer
 
         private byte[] Hash
         {
-            get => Encoding.ASCII.GetBytes(Password.Substring(1));
-            set => Password = "{" + Encoding.ASCII.GetString(value);
+            get => Convert.FromBase64String(Password.Substring(1));
+            set => Password = "{" + Convert.ToBase64String(value);
         }
 
         public void SetPassword(string password)
