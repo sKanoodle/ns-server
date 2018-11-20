@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,31 +11,42 @@ namespace NSServer
         static void Main(string[] args)
         {
             Listener listener = new Listener();
-            listener.Start(HandleMessage).Wait();
+            listener.Start(CreateMessageHandler).Wait();
         }
 
-        private static string HandleMessage(string message)
+        private static Func<string, string> CreateMessageHandler()
         {
-            var split = message.Split(": ");
-            (string method, string data) = (split[0], split[1]);
+            bool isAuthenticated = false;
 
-            switch (method)
+            string messageHandler(string message)
             {
-                case "login":
-                    if (Config.Instance.IsPasswordMatch(data))
+                var split = message.Split(": ");
+                (string method, string data) = (split[0], split[1]);
+
+                switch (method)
+                {
+                    case "login":
+                        if (Config.Instance.IsPasswordMatch(data))
+                        {
+                            isAuthenticated = true;
+                            return "ok\n\n";
+                        }
+                        isAuthenticated = false;
                         return "wrong password\n\n";
-                    return "ok\n\n";
-                case "change-ip":
-                    // TODO: error handling?
-                    ChangeConfig(data);
-                    return "ok\n\n";
-                default:
-                    return "invalid message\n\n";
+                    case "change-ip" when isAuthenticated:
+                        return ChangeConfig(data);
+                    default:
+                        return "invalid message\n\n";
+                }
             }
+            return messageHandler;
         }
 
-        private static void ChangeConfig(string newIP)
+        private static string ChangeConfig(string newIP)
         {
+            if (!Regex.IsMatch(newIP, @"^(\d{1,3}\.){3}\d{1,3}$"))
+                return "wrong IP format\n\n";
+
             string zone = File.ReadAllText(Config.Instance.ZoneFilePath);
 
             string serialRegex = @"(SOA.*\n\W+)(\d+)";
@@ -47,6 +59,7 @@ namespace NSServer
             var proc = new Process() { StartInfo = new ProcessStartInfo("/bin/bash", "service bind9 reload") };
             proc.Start();
             proc.WaitForExit();
+            return "ok\n\n";
         }
     }
 }

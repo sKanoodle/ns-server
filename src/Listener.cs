@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -22,7 +22,7 @@ namespace NSServer
         //      - or hope the bug is already fixed at this time
         private X509Certificate2 Certificate => new X509Certificate2(Config.Instance.ServerCertificatePath).CopyWithPrivateKey(PemKeyLoader.DecodeRSAPkcs8(Config.Instance.ServerPrivateKeyPath));
 
-        public async Task Start(Func<string, string> handleMessage)
+        public async Task Start(Func<Func<string, string>> createMessageHandler)
         {
             TcpListener listener = new TcpListener(IPAddress.Parse(Config.Instance.ListenIP), int.Parse(Config.Instance.ListenPort));
             listener.Start();
@@ -32,6 +32,7 @@ namespace NSServer
                 await listener.AcceptTcpClientAsync().ContinueWith(async t =>
                 {
                     Console.WriteLine("client connected!");
+                    var handleMessage = createMessageHandler();
                     var client = t.Result;
                     var stream = new SslStream(client.GetStream(), false);
 
