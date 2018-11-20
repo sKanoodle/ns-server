@@ -50,7 +50,10 @@ namespace NSServer
             string zone = File.ReadAllText(Config.Instance.ZoneFilePath);
 
             string serialRegex = @"(SOA.*\n\W+)(\d+)";
-            string recordRegex = "(\n" + Regex.Escape(Config.Instance.EntryToChange) + @"\W+IN\W+A\W+)(\d{1,3}\.){3}\d{1,3}";
+            string recordRegex = "(\n" + Regex.Escape(Config.Instance.EntryToChange) + @"\W+IN\W+A\W+)((\d{1,3}\.){3}\d{1,3})";
+
+            if (Regex.Match(zone, recordRegex).Groups[2].Value == newIP)
+                return "ok\nno change\n\n";
 
             zone = Regex.Replace(zone, serialRegex,m => $"{m.Groups[1].Value}{int.Parse(m.Groups[2].Value) + 1}");
             zone = Regex.Replace(zone, recordRegex, m => $"{m.Groups[1].Value}{newIP}");
