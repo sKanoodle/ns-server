@@ -80,22 +80,26 @@ namespace NSServer
         {
             byte[] bytes = new byte[BUFFER_SIZE];
             StringBuilder sb = new StringBuilder();
-            string result;
 
             int i;
             while ((i = stream.ReadAsync(bytes, 0, bytes.Length).Result) != 0)
             {
                 string part = Encoding.ASCII.GetString(bytes, 0, i);
 
+                // check if double newline was spread over multiple mesasges
+                if (sb.Length > 0 && sb[sb.Length - 1] == '\n' && part[0] == '\n')
+                {
+                    sb.Remove(sb.Length - 1, 1);
+                    yield return generateOutput();
+                    part = part.Substring(1);
+                }
+
                 int index;
                 // messages end with double newlines, so we try to find out, if there is an ending in the middle of the string
                 while ((index = part.IndexOf("\n\n")) > 0)
                 {
                     sb.Append(part.Substring(0, index));
-                    result = sb.ToString();
-                    Console.WriteLine($"received message:\n{result}\n\n");
-                    yield return result;
-                    sb.Clear();
+                    yield return generateOutput();
 
                     // end of message was at end of string, so quit from processing the string
                     if (index + 2 > part.Length)
@@ -108,6 +112,14 @@ namespace NSServer
                     part = part.Substring(index + 2);
                 }
                 sb.Append(part);
+            }
+
+            string generateOutput()
+            {
+                string result = sb.ToString();
+                Console.WriteLine($"received message:\n{result}\n\n");
+                sb.Clear();
+                return result;
             }
 
         }
