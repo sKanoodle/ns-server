@@ -9,6 +9,8 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Threading;
 
 namespace NSServer
 {
@@ -26,47 +28,62 @@ namespace NSServer
         {
             TcpListener listener = new TcpListener(IPAddress.Parse(Config.Instance.ListenIP), int.Parse(Config.Instance.ListenPort));
             listener.Start();
+
+            SemaphoreSlim semaphore = new SemaphoreSlim(Config.Instance.InitialListenerCount);
             while (true)
             {
+                await semaphore.WaitAsync();
                 Console.WriteLine($"listening for new client on {Config.Instance.ListenIP}:{Config.Instance.ListenPort}...");
-                await listener.AcceptTcpClientAsync().ContinueWith(async t =>
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                Task.Run(async () =>
                 {
-                    Console.WriteLine("client connected!");
-                    var handleMessage = createMessageHandler();
-                    var client = t.Result;
-                    var stream = new SslStream(client.GetStream(), false);
+                    await listener.AcceptTcpClientAsync().ContinueWith(async t =>
+                        {
+                            semaphore.Release();
+                            await HandleClient(t, createMessageHandler);
+                        });
 
-                    try
-                    {
-                        stream.AuthenticateAsServer(Certificate, clientCertificateRequired: false, checkCertificateRevocation: true);
-
-                        foreach (string message in ReadMessages(stream))
-                            await SendMessage(stream, handleMessage(message));
-                    }
-                    catch (AuthenticationException e)
-                    {
-                        Console.WriteLine("Exception: {0}", e.Message);
-                        if (e.InnerException != null)
-                            Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
-                        Console.WriteLine("Authentication failed - closing the connection.");
-                    }
-                    // async eats exceptions
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    finally
-                    {
-                        stream.Close();
-                        client.Close();
-                    }
                 });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+            }
+        }
+
+        private async Task HandleClient(Task<TcpClient> t, Func<Func<string, string>> createMessageHandler)
+        {
+            var handleMessage = createMessageHandler();
+            var client = t.Result;
+            Console.WriteLine($"[{DateTime.Now}] client connected! ({client.Client.RemoteEndPoint} --> {client.Client.LocalEndPoint})");
+            var stream = new SslStream(client.GetStream(), false);
+
+            try
+            {
+                stream.AuthenticateAsServer(Certificate, clientCertificateRequired: false, checkCertificateRevocation: true);
+
+                foreach (string message in ReadMessages(stream))
+                    await SendMessage(stream, handleMessage(message));
+            }
+            catch (AuthenticationException e)
+            {
+                Console.WriteLine("Exception: {0}", e.Message);
+                if (e.InnerException != null)
+                    Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
+                Console.WriteLine("Authentication failed - closing the connection.");
+            }
+            // async eats exceptions
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                stream.Close();
+                client.Close();
             }
         }
 
         private async Task SendMessage(SslStream stream, string message)
         {
-            Console.WriteLine($"sending message:\n{message}");
             byte[] bytes = Encoding.ASCII.GetBytes(message);
             int offset = 0;
             while (offset < bytes.Length)
@@ -117,7 +134,6 @@ namespace NSServer
             string generateOutput()
             {
                 string result = sb.ToString();
-                Console.WriteLine($"received message:\n{result}\n\n");
                 sb.Clear();
                 return result;
             }

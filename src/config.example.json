@@ -1,9 +1,12 @@
 ﻿{
     "ListenIP": "0.0.0.0",
     "ListenPort": "24654",
+	"InitialListenerCount": 3,
     "ZoneFilePath": "/path/to/zone/file",
-    "EntryToChange": "mail",
-    "Password": "set pw here, will get hashed after program start, must not start with '{'",
+	"Clients":[{
+		"EntryToChange": "mail",
+		"Password": "set pw here, will get hashed after program start, must not start with '{'"
+	}],
     "ServerCertificatePath": "/path/to/certificate",
     "ServerPrivateKeyPath": "/path/to/certificate/key"
 }
